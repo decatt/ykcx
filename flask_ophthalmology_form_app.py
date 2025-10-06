@@ -136,6 +136,20 @@ def api_prefill():
         print(f"Error in /api/prefill: {e}")
         return jsonify({"ok": False, "error": str(e)}), 500
 
+@app.route('/api/select_iol', methods=['POST'])
+def api_select_iol():
+    try:
+        payload = request.get_json(silent=True) or {}
+        iol_power = payload.get('iol_power')
+        sphere = payload.get('sphere')
+
+        # 目前仅记录选择，具体业务逻辑待定
+        app.logger.info('接收到 IOL 度数选择: iol_power=%s, sphere=%s', iol_power, sphere)
+
+        return jsonify({"ok": True, "message": "已记录选择"})
+    except Exception as exc:
+        app.logger.exception('处理 IOL 度数选择时出错')
+        return jsonify({"ok": False, "error": str(exc)}), 500
 if __name__ == '__main__':
     os.makedirs('static/html', exist_ok=True)
     app.run(host='0.0.0.0', port=5000, debug=True)
