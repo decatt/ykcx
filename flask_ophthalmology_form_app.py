@@ -104,8 +104,8 @@ FIELDS = [
 def serve_js(filename):
     return send_from_directory('static/html', filename)
 
-@app.route('/', methods=['GET', 'POST'])
-def index():
+@app.route('/form', methods=['GET', 'POST'])
+def form_view():
     values = {}
     result = None
 
@@ -128,6 +128,7 @@ def index():
     return render_template_string(html_template, fields=FIELDS, values=values, result=result)
 
 
+@app.route('/', methods=['GET', 'POST'])
 @app.route('/login', methods=['GET', 'POST'])
 def login_view():
     error = None
@@ -137,7 +138,7 @@ def login_view():
         password = request.form.get('password', '')
 
         if login(user_id, password):
-            return redirect(url_for('index'))
+            return redirect(url_for('form_view'))
 
         error = "账号或密码错误，请重试。"
 

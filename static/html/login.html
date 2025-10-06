@@ -23,7 +23,7 @@
     {% if error %}
       <div class="error">{{ error }}</div>
     {% endif %}
-    <form method="post" action="/login">
+    <form method="post" action="{{ url_for('login_view') }}">
       <div class="field">
         <label for="user_id">账号</label>
         <input type="text" id="user_id" name="user_id" placeholder="请输入账号" required />
