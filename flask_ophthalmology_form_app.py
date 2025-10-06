@@ -1,4 +1,4 @@
-from flask import Flask, request, send_from_directory, render_template_string, jsonify
+from flask import Flask, request, send_from_directory, render_template_string, jsonify, redirect, url_for
 import numpy as np
 import os
 from compute_table import compute_t
@@ -14,6 +14,13 @@ app = Flask(__name__)
 # ---- Placeholder model function -------------------------------------------------
 def compute(x: np.ndarray) -> np.ndarray:
     return compute_t(x)
+
+
+def login(user_id: str, password: str) -> bool:
+    """简单的账号密码校验."""
+    if user_id == "001" and password == "123":
+        return True
+    return False
 
 
 def get_info_from_pid(pid="001"):
@@ -119,6 +126,25 @@ def index():
         html_template = f.read()
 
     return render_template_string(html_template, fields=FIELDS, values=values, result=result)
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login_view():
+    error = None
+
+    if request.method == 'POST':
+        user_id = request.form.get('user_id', '').strip()
+        password = request.form.get('password', '')
+
+        if login(user_id, password):
+            return redirect(url_for('index'))
+
+        error = "账号或密码错误，请重试。"
+
+    with open(os.path.join('static/html', 'login.html'), encoding='utf-8') as f:
+        html_template = f.read()
+
+    return render_template_string(html_template, error=error)
 
 @app.route('/api/prefill', methods=['GET'])
 def api_prefill():
