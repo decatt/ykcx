@@ -1,4 +1,13 @@
-from flask import Flask, request, send_from_directory, render_template_string, jsonify
+from flask import (
+    Flask,
+    request,
+    send_from_directory,
+    render_template_string,
+    jsonify,
+    redirect,
+    url_for,
+    session,
+)
 import numpy as np
 import os
 from compute_table import compute_t
@@ -10,11 +19,17 @@ import pandas as pd
 import numpy as np
 
 app = Flask(__name__)
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-key")
 
 # ---- Placeholder model function -------------------------------------------------
 def compute(x: np.ndarray) -> np.ndarray:
     return compute_t(x)
 
+def login(user_id: str, password: str) -> bool:
+    """简单的账号密码校验."""
+    if user_id == "001" and password == "123":
+        return True
+    return False
 
 def get_info_from_pid(pid="001"):
     """
@@ -97,8 +112,10 @@ FIELDS = [
 def serve_js(filename):
     return send_from_directory('static/html', filename)
 
-@app.route('/', methods=['GET', 'POST'])
-def index():
+@app.route('/form', methods=['GET', 'POST'])
+def form_view():
+    if "user_id" not in session:
+        return redirect(url_for("login_view"))
     values = {}
     result = None
 
@@ -118,7 +135,13 @@ def index():
     with open(os.path.join('static/html', 'template.html'), encoding='utf-8') as f:
         html_template = f.read()
 
-    return render_template_string(html_template, fields=FIELDS, values=values, result=result)
+    return render_template_string(
+        html_template,
+        fields=FIELDS,
+        values=values,
+        result=result,
+        session_user_id=session.get("user_id"),
+    )
 
 @app.route('/api/prefill', methods=['GET'])
 def api_prefill():
@@ -135,6 +158,32 @@ def api_prefill():
     except Exception as e:
         print(f"Error in /api/prefill: {e}")
         return jsonify({"ok": False, "error": str(e)}), 500
+
+@app.route('/', methods=['GET', 'POST'])
+@app.route('/login', methods=['GET', 'POST'])
+def login_view():
+    error = None
+
+    if request.method == 'POST':
+        user_id = request.form.get('user_id', '').strip()
+        password = request.form.get('password', '')
+
+        if login(user_id, password):
+            session["user_id"] = user_id
+            return redirect(url_for('form_view'))
+
+        error = "账号或密码错误，请重试。"
+
+    with open(os.path.join('static/html', 'login.html'), encoding='utf-8') as f:
+        html_template = f.read()
+
+    last_user_id = request.form.get("user_id", "") if request.method == "POST" else ""
+
+    return render_template_string(
+        html_template,
+        error=error,
+        last_user_id=last_user_id,
+    )
 
 @app.route('/api/select_iol', methods=['POST'])
 def api_select_iol():
