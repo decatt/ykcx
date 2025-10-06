@@ -61,23 +61,20 @@
       <h1>计算结果</h1>
       {% if result is not none %}
         {% if result and result|length > 0 %}
-        <table>
-          <thead>
-            <tr>
-              <th>IOL度数</th>
-              <th>1m-矫正球镜度数 (D)</th>
-            </tr>
-          </thead>
-          <tbody>
+        <div class="field">
+          <label for="resultDropdown">可选 IOL 度数</label>
+          <select id="resultDropdown" style="border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;font-size:14px;outline:none;">
+            <option value="" disabled selected>请选择一个度数</option>
             {% for row in result %}
-            <tr>
-              <td>{{ row[0] }}</td>
-              <td>{{ row[1] }}</td>
-            </tr>
+            <option value="{{ row[0] }}" data-iol="{{ row[0] }}" data-sphere="{{ row[1] }}">
+              IOL度数：{{ row[0] }}（1m-矫正球镜度数：{{ row[1] }}）
+            </option>
             {% endfor %}
           </tbody>
-        </table>
-        <div class="result-actions">
+        </select>
+        </div>
+        <div class="result-actions" style="display:flex;gap:12px;flex-wrap:wrap;">
+          <button type="button" class="secondary" id="selectDegreeBtn">选择度数</button>
           <button type="button" class="secondary" id="downloadCsv">导出为 CSV</button>
         </div>
         {% else %}
@@ -178,6 +175,48 @@
     if (prefillBtn) {
       prefillBtn.addEventListener('click', prefillByPid);
     }
+  })();
+</script>
+<script>
+  (function() {
+    const dropdown = document.getElementById('resultDropdown');
+    const selectBtn = document.getElementById('selectDegreeBtn');
+
+    if (!dropdown || !selectBtn) {
+      return;
+    }
+
+    selectBtn.addEventListener('click', async function() {
+      const option = dropdown.selectedOptions[0];
+      if (!option || !option.dataset.iol) {
+        alert('请选择一个度数');
+        return;
+      }
+
+      const payload = {
+        iol_power: option.dataset.iol ? parseFloat(option.dataset.iol) : null,
+        sphere: option.dataset.sphere ? parseFloat(option.dataset.sphere) : null,
+      };
+
+      try {
+        const response = await fetch('/api/select_iol', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await response.json();
+        if (!data.ok) {
+          throw new Error(data.error || '未知错误');
+        }
+
+        alert(data.message || '已提交选择');
+      } catch (error) {
+        alert('提交失败：' + error.message);
+      }
+    });
   })();
 </script>
 </body>
