@@ -78,6 +78,27 @@
   if (prefillBtn) prefillBtn.addEventListener('click', prefillByPid);
 })();
 
+// ===== 清空表单 =====
+(function () {
+  const resetBtn = document.getElementById('resetBtn');
+  const form = document.querySelector('form');
+
+  if (!resetBtn || !form) return;
+
+  resetBtn.addEventListener('click', function () {
+    form.reset();
+
+    // form.reset() 只会恢复初始值，这里进一步清空所有输入框
+    form.querySelectorAll('input').forEach((input) => {
+      if (input.type === 'text' || input.type === 'number') {
+        input.value = '';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    });
+  });
+})();
+
 // ===== 选择度数 =====
 (function () {
   const dropdown = document.getElementById('resultDropdown');
