@@ -31,11 +31,14 @@
   <div class="container">
     <div class="card">
       <h1>眼科参数预测 Demo</h1>
+      {% if session_doctor_id %}
+      <div class="hint" style="margin-bottom:16px;">当前登录医生ID：<strong>{{ session_doctor_id }}</strong></div>
+      {% endif %}
       <form method="post" action="{{ url_for('form_view') }}">
         <div class="actions" style="margin-bottom: 12px;">
             <div class="field" style="flex:1; max-width: 320px;">
               <label for="patient_id">病人ID</label>
-              <input type="text" id="patient_id" value="{{ session_user_id or '001' }}" placeholder="如：001" style="border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;font-size:14px;outline:none;">
+              <input type="text" id="patient_id" name="patient_id" value="{{ patient_id_value or '001' }}" placeholder="如：001" style="border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;font-size:14px;outline:none;">
               <div class="hint">输入病人ID后，点击“一键填补”自动填入下方字段</div>
             </div>
             <div style="display:flex;align-items:flex-end;">

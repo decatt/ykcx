@@ -114,11 +114,17 @@ def serve_js(filename):
 
 @app.route('/form', methods=['GET', 'POST'])
 def form_view():
-    if "user_id" not in session:
+    doctor_id = session.get("doctor_id")
+    if not doctor_id:
         return redirect(url_for("login_view"))
     values = {}
     result = None
+    if request.method == "POST":
+        patient_id_value = request.form.get("patient_id", "").strip()
+    else:
+        patient_id_value = request.args.get("pid", "").strip()
 
+    patient_id_value = patient_id_value or "001"
     if request.method == 'POST':
         vector = []
         for key, _ in FIELDS:
@@ -140,7 +146,8 @@ def form_view():
         fields=FIELDS,
         values=values,
         result=result,
-        session_user_id=session.get("user_id"),
+        session_doctor_id=doctor_id,
+        patient_id_value=patient_id_value,
     )
 
 @app.route('/api/prefill', methods=['GET'])
@@ -169,7 +176,8 @@ def login_view():
         password = request.form.get('password', '')
 
         if login(user_id, password):
-            session["user_id"] = user_id
+            session["doctor_id"] = user_id
+            session.pop("user_id", None)
             return redirect(url_for('form_view'))
 
         error = "账号或密码错误，请重试。"
@@ -188,12 +196,21 @@ def login_view():
 @app.route('/api/select_iol', methods=['POST'])
 def api_select_iol():
     try:
+        doctor_id = session.get("doctor_id")
+        if not doctor_id:
+            return jsonify({"ok": False, "error": "未登录"}), 401
+
         payload = request.get_json(silent=True) or {}
         iol_power = payload.get('iol_power')
         sphere = payload.get('sphere')
 
         # 目前仅记录选择，具体业务逻辑待定
-        app.logger.info('接收到 IOL 度数选择: iol_power=%s, sphere=%s', iol_power, sphere)
+        app.logger.info(
+            '接收到 IOL 度数选择: doctor_id=%s, iol_power=%s, sphere=%s',
+            doctor_id,
+            iol_power,
+            sphere,
+        )
 
         return jsonify({"ok": True, "message": "已记录选择"})
     except Exception as exc:
